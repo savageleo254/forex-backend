@@ -1,0 +1,6 @@
+@echo off
+curl -X POST http://127.0.0.1:8000/trade/override ^
+-H "Content-Type: application/json" ^
+-H "x-api-key: fx-trade-control-7788" ^
+-d "{\"trade_id\": \"TEST-BAT\", \"action\": \"close\"}"
+pause

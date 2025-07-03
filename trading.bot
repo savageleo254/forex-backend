@@ -1,0 +1,48 @@
+import MetaTrader5 as mt5
+import os
+from dotenv import load_dotenv
+from bot_engine.fusion_engine import fuse_signals
+
+load_dotenv()
+
+MT5_LOGIN = int(os.getenv("MT5_LOGIN"))          # Add to .env
+MT5_PASSWORD = os.getenv("MT5_PASSWORD")         # Add to .env
+MT5_SERVER = os.getenv("MT5_SERVER")             # Add to .env
+
+def connect_mt5():
+    if not mt5.initialize(server=MT5_SERVER, login=MT5_LOGIN, password=MT5_PASSWORD):
+        raise RuntimeError(f"MT5 connection failed: {mt5.last_error()}")
+
+def place_order(symbol, lot, order_type):
+    price = mt5.symbol_info_tick(symbol).ask if order_type=='buy' else mt5.symbol_info_tick(symbol).bid
+    request = {
+        "action": mt5.TRADE_ACTION_DEAL,
+        "symbol": symbol,
+        "volume": lot,
+        "type": mt5.ORDER_TYPE_BUY if order_type=='buy' else mt5.ORDER_TYPE_SELL,
+        "price": price,
+        "deviation": 20,
+        "magic": 234000,
+        "comment": "Fusion Signal Trade",
+        "type_time": mt5.ORDER_TIME_GTC,
+        "type_filling": mt5.ORDER_FILLING_IOC,
+    }
+    result = mt5.order_send(request)
+    print(result)
+
+if __name__ == "__main__":
+    connect_mt5()
+    # Example: Only place trade if fused_score > 0.5 or < -0.5
+    smc_ctx = {"bias_score": 0.62}
+    forecast = 0.28
+    sentiment = {"sentiment_score": 0.41}
+    symbol = "EURUSD"
+    timeframe = "M5"
+    result = fuse_signals(smc_ctx, forecast, sentiment, symbol=symbol, timeframe=timeframe)
+    if result["fused_score"] > 0.5:
+        place_order(symbol, 0.1, 'buy')
+    elif result["fused_score"] < -0.5:
+        place_order(symbol, 0.1, 'sell')
+    else:
+        print("No trading signal.")
+    mt5.shutdown()
