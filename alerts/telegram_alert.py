@@ -1,20 +1,32 @@
+# alerts/telegram_alerts.py
 import os
 import requests
+from dotenv import load_dotenv
 
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+load_dotenv()
 
-def send_telegram_message(message: str, chat_id: str = None):
-    chat_id = chat_id or TELEGRAM_CHAT_ID
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+def send_telegram_alert(message):
+    token = os.getenv("TELEGRAM_TOKEN")
+    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    if not token or not chat_id:
+        print("❌ TELEGRAM_TOKEN or CHAT_ID missing.")
+        return
+
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
     payload = {
         "chat_id": chat_id,
-        "text": message,
-        "parse_mode": "HTML"
+        "text": f"🚨 TEST ALERT 🚨\n{message}",
+        "parse_mode": "Markdown"
     }
-    try:
-        requests.post(url, data=payload, timeout=5)
-    except Exception as e:
-        print(f"Telegram send error: {e}")
 
-# Example: send_telegram_message("Trade closed: +$90 (TP Hit)")
+    try:
+        resp = requests.post(url, data=payload)
+        if resp.status_code == 200:
+            print("✅ Telegram test alert sent successfully.")
+        else:
+            print(f"❌ Failed. Status: {resp.status_code} → {resp.text}")
+    except Exception as e:
+        print(f"❌ Exception: {e}")
+
+if __name__ == "__main__":
+    send_telegram_alert("This is a TEST ALERT from Savage Leo (Pro Veteran+++).")
