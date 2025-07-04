@@ -20,6 +20,26 @@ RISK_MAX = 2.0
 RISK_MIN = 0.25
 
 # === HELPERS ===
+# bot_engine/fusion_engine.py
+
+def fuse_signals(sentiment, forecast, structure, market_state):
+    """Dummy fusion logic to simulate a valid decision."""
+    if sentiment["score"] > 0.5 and forecast > 0.5 and structure["confirmed"]:
+        return {
+            "decision": "entry",
+            "entry": market_state["entry"],
+            "entry_type": structure["type"],
+            "direction": sentiment["direction"],
+            "sl": market_state["entry"] - 1.5,
+            "tp": market_state["entry"] + 3.0,
+            "risk_pct": 1.0,
+            "confidence": round((sentiment["score"] + forecast) / 2, 2)
+        }
+    else:
+        return {
+            "decision": "skip",
+            "reason": "Low sentiment/forecast score or unconfirmed structure"
+        }
 
 def urgency_rank(urgency: str) -> int:
     return {'low': 0, 'medium': 1, 'high': 2}.get(urgency.lower(), 0)
@@ -38,7 +58,7 @@ def decide_entry_type(structure, urgency):
 
 def calculate_sl_tp(entry, direction, structure, volatility, rr=2.0):
     buffer = structure.get('sl_buffer', 0.0) + volatility
-    if direction == 'buy':
+    if direction == 'bullish' or direction == 'buy':
         sl = entry - buffer
         tp = entry + (abs(entry - sl) * rr)
     else:
@@ -64,7 +84,7 @@ def fuse_signals(
     - structure: {'confirmed': bool, 'type': str, 'sl_buffer': float}
     - market_state: {'entry': float, 'volatility': float, 'spread': float, 'median_spread': float, 'data_age': int}
 
-    Returns: trade intent dict
+    Returns: dict with decision, entry details, SL/TP, confidence, etc.
     """
 
     # === PRE-TRADE BLOCKERS ===
@@ -103,5 +123,23 @@ def fuse_signals(
     else:
         return {'decision': 'no_entry', 'reason': 'Confidence too low'}
 
-    # === ENTRY SETUP ===
-    entry_type = decide_entry_t_
+    # === ENTRY LOGIC ===
+    direction = 'buy' if sentiment['score'] > 0 else 'sell'
+    sl, tp = calculate_sl_tp(
+        entry=market_state['entry'],
+        direction=direction,
+        structure=structure,
+        volatility=market_state['volatility']
+    )
+    entry_type = decide_entry_type(structure, sentiment['urgency'])
+
+    return {
+        'decision': 'entry',
+        'entry': market_state['entry'],
+        'direction': direction,
+        'entry_type': entry_type,
+        'sl': sl,
+        'tp': tp,
+        'risk_pct': risk_pct,
+        'confidence': round(confidence, 3)
+    }

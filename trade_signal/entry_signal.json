@@ -1,0 +1,12 @@
+{
+  "symbol": "XAUUSD",
+  "timeframe": "M5",
+  "entry": 2363.75,
+  "direction": "buy",
+  "entry_type": "market",
+  "sl": 2363.24,
+  "tp": 2364.77,
+  "risk_pct": 1.5,
+  "confidence": 0.856,
+  "timestamp": "2025-07-04T10:19:50.028824+00:00"
+}

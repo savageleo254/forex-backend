@@ -1,0 +1,75 @@
+```python
+import os
+import json
+from datetime import datetime
+from dotenv import load_dotenv
+from bot_engine.fusion_engine import fuse_signals
+from alerts.telegram_alerts import send_telegram_alert
+from journal.logger import log_fusion_result
+from journal.llm_reviewer import review_trade_and_log
+
+load_dotenv()
+
+symbol = "XAUUSD"
+timeframe = "M5"
+entry_price = 2363.75
+volatility = 0.11
+spread = 0.13
+median_spread = 0.09
+median_volatility = 0.1
+sentiment = {"score": 0.85, "urgency": "high", "direction": "bullish"}
+forecast = 0.72
+structure = {"confirmed": True, "type": "breakout", "sl_buffer": 0.4}
+market_state = {
+    "entry": entry_price,
+    "volatility": volatility,
+    "spread": spread,
+    "median_spread": median_spread,
+    "data_age": 3,
+    "median_volatility": median_volatility
+}
+
+fusion_result = fuse_signals(sentiment, forecast, structure, market_state) or {}
+
+os.makedirs("signal", exist_ok=True)
+os.makedirs("journal", exist_ok=True)
+os.makedirs("logs", exist_ok=True)
+
+if fusion_result.get("decision") == "entry":
+    signal = {
+        "symbol": symbol,
+        "timeframe": timeframe,
+        "entry": fusion_result.get("entry", 0),
+        "direction": fusion_result.get("direction", ""),
+        "entry_type": fusion_result.get("entry_type", ""),
+        "sl": fusion_result.get("sl", 0),
+        "tp": fusion_result.get("tp", 0),
+        "risk_pct": fusion_result.get("risk_pct", 0),
+        "confidence": fusion_result.get("confidence", 0),
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+    with open("signal/entry_signal.json", "w") as f:
+        json.dump(signal, f, indent=2)
+
+    log_fusion_result(signal)
+
+    send_telegram_alert(
+        f"🚨 *New Trade Signal*\nSymbol: {symbol}\n"
+        f"Action: {fusion_result.get('direction', '').upper()}\n"
+        f"Confidence: {fusion_result.get('confidence', 0)}\n"
+        f"Risk: {fusion_result.get('risk_pct', 0)}%\n"
+        f"SL: {fusion_result.get('sl', 0)} | TP: {fusion_result.get('tp', 0)}"
+    )
+
+    signal["fused_score"] = fusion_result.get("confidence", 0)
+    signal["forecast"] = forecast
+    signal["sentiment"] = sentiment.get("score", 0)
+    signal["smc_bias"] = sentiment.get("direction", "")
+    review_trade_and_log(signal)
+
+else:
+    reason = fusion_result.get("reason", "No valid signal")
+    with open("logs/autonomous_skipped.log", "a") as f:
+        f.write(f"{datetime.utcnow().isoformat()} – {reason}\n")
+```

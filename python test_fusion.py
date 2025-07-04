@@ -12,5 +12,5 @@ sentiment = {"sentiment_score": 0.41}
 symbol = "EURUSD"
 timeframe = "M5"
 
-result = fuse_signals(smc_ctx, forecast, sentiment, symbol=symbol, timeframe=timeframe)
+result = fuse_signals(sentiment, forecast, structure, market_state)
 print(result)

@@ -1,0 +1,12 @@
+2025-07-04 13:38:58,726 INFO Backend started
+2025-07-04 13:38:58,729 INFO Trade executed!
+2025-07-04 13:38:58,733 WARNING This is a warning
+2025-07-04 13:38:58,736 ERROR Failed to connect to MetaTrader!
+2025-07-04 13:39:01,939 INFO OpenRouter API key loaded and set (ending with ...f40c)
+2025-07-04 13:39:14,857 INFO HTTP Request: POST https://openrouter.ai/api/v1/chat/completions Status: 200
+2025-07-04 13:41:05,627 INFO Backend started
+2025-07-04 13:41:05,627 INFO Trade executed!
+2025-07-04 13:41:05,628 WARNING This is a warning
+2025-07-04 13:41:05,629 ERROR Failed to connect to MetaTrader!
+2025-07-04 13:41:08,053 INFO OpenRouter API key loaded and set (ending with ...f40c)
+2025-07-04 13:41:11,944 INFO HTTP Request: POST https://openrouter.ai/api/v1/chat/completions Status: 200
